@@ -7,9 +7,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.DriverManager;
 import org.springframework.web.bind.annotation.RestController;
+import java.io.IOException; 
+import java.util.logging.Level; 
+import java.util.logging.Logger; 
+import java.util.logging.*; 
 
 @RestController
 public class Controller {
+	
+	 private final static Logger LOGGER =  
+             Logger.getLogger(Logger.GLOBAL_LOGGER_NAME); 
+	 
+
 	
 	@RequestMapping(value="/")
 	public String Hello()
@@ -20,6 +29,10 @@ public class Controller {
 	@RequestMapping(value="/data")
 	public String data() throws SQLException
 	{
+		LogManager lgmngr = LogManager.getLogManager(); 
+		  
+        Logger log = lgmngr.getLogger(Logger.GLOBAL_LOGGER_NAME); 
+		
 		String ans = "DATA...........\n";
 		// Connect to database
         String hostName = "your_server.database.windows.net"; // update me
@@ -32,10 +45,10 @@ public class Controller {
         try {
             connection = DriverManager.getConnection(url);
             String schema = connection.getSchema();
-            System.out.println("Successful connection - Schema: " + schema);
-
-            System.out.println("Query data example:");
-            System.out.println("=========================================");
+            log.log(Level.INFO, "Successful connection - Schema: " + schema);
+            
+            log.log(Level.INFO, "Query data example:");
+            log.log(Level.INFO, "=========================================");
 
             // Create and execute a SELECT SQL statement.
             String selectSql = "SELECT * FROM Persons";
@@ -48,7 +61,7 @@ public class Controller {
                 while (resultSet.next())
                 {
                 	ans+= resultSet.getString(1) + " " + resultSet.getString(2) + " " +resultSet.getString(3);
-                    System.out.println(resultSet.getString(1) + " "
+                	log.log(Level.INFO,resultSet.getString(1) + " "
                         + resultSet.getString(2));
                 }
                 
@@ -57,6 +70,7 @@ public class Controller {
         
         catch (Exception e) 
         {
+        	log.log(Level.INFO, "Error::"+e);
             e.printStackTrace();
         }
         finally {
