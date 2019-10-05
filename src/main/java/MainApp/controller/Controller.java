@@ -1,5 +1,10 @@
 package MainApp.controller;
+import org.json.JSONObject;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
@@ -18,39 +23,111 @@ public class Controller {
 	 private final static Logger LOGGER =  
              Logger.getLogger(Logger.GLOBAL_LOGGER_NAME); 
 	 
-
+	 public static LogManager lgmngr = LogManager.getLogManager(); 
+	  
+	 public static Logger log = lgmngr.getLogger(Logger.GLOBAL_LOGGER_NAME); 
+	 
+	 private final static String url = "jdbc:sqlserver://hackathondb2019.database.windows.net:1433;database=Hackathon;user=wizards@hackathondb2019;password=Password1q2w;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;";
+	 
+	 Connection connection = null;
+	 
+	
+	 public Connection getConnection()
+	 {
+		 if(connection !=null)
+			 return connection;
+		 else
+		 {
+			 try {
+				connection = DriverManager.getConnection(url);
+				log.log(Level.INFO, "======================================");
+				log.log(Level.INFO, "Connection Successfull");
+				log.log(Level.INFO, "======================================");
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			 
+			 return connection;
+		 }
+	 }
+	 
 	
 	@RequestMapping(value="/")
 	public String Hello()
 	{
+		connection = getConnection();
 		return "Hello Wolrd, I am on Azure";
 	}
 	
-	@RequestMapping(value="/data")
+	
+	@RequestMapping(value="/closeConnection")
+	public String close() {
+		
+		try {
+			connection.close();
+			return "Closed Successfully";
+		}
+		catch(Exception e)
+		{
+			return e + "Error Occured";
+		}
+		
+	}
+	
+	
+	@ResponseBody
+	@RequestMapping(value="/login", method= RequestMethod.POST, produces="application/json")
+	public String Login(@RequestParam String email, @RequestParam String password) {
+		
+		JSONObject obj = new JSONObject(); 
+		String userid = null;
+        try {
+            connection = getConnection();
+        	
+        	// Create and execute a SELECT SQL statement.
+            String selectSql = "SELECT * FROM MyUSER where Email=? and Password=?";
+
+            PreparedStatement statement = connection.prepareStatement(selectSql);  
+            statement.setString(1, email);
+            statement.setString(2, password);
+            
+            ResultSet resultSet = statement.executeQuery();
+            
+            System.out.println("OK:"+email+" "+password);
+            
+            boolean success = false;
+            if(resultSet.next())
+            {
+            	userid = resultSet.getString("UserID");
+            	success = true;
+            }
+            
+            
+            obj.put("success", success);
+            if(success)
+            	obj.put("userid", userid);
+            
+        }
+        
+        catch (Exception e) 
+        {
+        	log.log(Level.INFO, "Error::"+e);
+            e.printStackTrace();
+        }
+        
+        
+        return obj.toString();
+
+	}
+	
+	@RequestMapping(value="/test")
 	public String data() throws SQLException
 	{
-		LogManager lgmngr = LogManager.getLogManager(); 
-		  
-        Logger log = lgmngr.getLogger(Logger.GLOBAL_LOGGER_NAME); 
-		
-		String ans = "DATA...........\n";
-		// Connect to database
-        String hostName = "your_server.database.windows.net"; // update me
-        String dbName = "your_database"; // update me
-        String user = "your_username"; // update me
-        String password = "your_password"; // update me
-        String url = "jdbc:sqlserver://hackathondb2019.database.windows.net:1433;database=Hackathon;user=wizards@hackathondb2019;password=Password1q2w;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;";
-        Connection connection = null;
-
+		connection = getConnection();
+		String ans = "Data........";
         try {
-            connection = DriverManager.getConnection(url);
-            String schema = connection.getSchema();
-            log.log(Level.INFO, "Successful connection - Schema: " + schema);
             
-            log.log(Level.INFO, "Query data example:");
-            log.log(Level.INFO, "=========================================");
-
-            // Create and execute a SELECT SQL statement.
+        	// Create and execute a SELECT SQL statement.
             String selectSql = "SELECT * FROM Persons";
 
             	Statement statement = connection.createStatement();
@@ -73,12 +150,6 @@ public class Controller {
         {
         	log.log(Level.INFO, "Error::"+e);
             e.printStackTrace();
-        }
-        finally {
-        	if(connection!=null)
-        	{
-        		connection.close();
-        	}
         }
         
         
