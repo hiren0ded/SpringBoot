@@ -77,7 +77,7 @@ public class Controller {
 	
 	@ResponseBody
 	@RequestMapping(value="/login", method= RequestMethod.POST, produces="application/json")
-	public String Login(@RequestParam String email, @RequestParam String password) {
+	public String Login(@RequestParam String email, @RequestParam String password, @RequestParam String role) {
 		
 		JSONObject obj = new JSONObject(); 
 		String userid = null;
@@ -85,11 +85,12 @@ public class Controller {
             connection = getConnection();
         	
         	// Create and execute a SELECT SQL statement.
-            String selectSql = "SELECT * FROM MyUSER where Email=? and Password=?";
+            String selectSql = "SELECT * FROM MyUSER where Email=? and Password=? and UserRole=?";
 
             PreparedStatement statement = connection.prepareStatement(selectSql);  
             statement.setString(1, email);
             statement.setString(2, password);
+            statement.setString(3, role);
             
             ResultSet resultSet = statement.executeQuery();
             
