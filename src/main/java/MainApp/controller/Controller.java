@@ -1,4 +1,5 @@
 package MainApp.controller;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -9,6 +10,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.DriverManager;
 import org.springframework.web.bind.annotation.RestController;
@@ -118,6 +120,66 @@ public class Controller {
         
         
         return obj.toString();
+
+	}	
+	
+	@ResponseBody
+	@RequestMapping(value="/seller", method= RequestMethod.POST, produces="application/json")
+	public String Seller(@RequestParam String sellerid) {
+		
+		JSONObject jsonobject = new JSONObject(); 
+		JSONObject answer = new JSONObject(); 
+        JSONArray jsonarray = new JSONArray();
+		String userid = null;
+        try {
+            connection = getConnection();
+        	
+        	// Create and execute a SELECT SQL statement.
+            String selectSql = "SELECT * FROM seller where SellerID=?";
+
+            PreparedStatement statement = connection.prepareStatement(selectSql);  
+            statement.setString(1, sellerid);
+            
+            ResultSet resultSet = statement.executeQuery();
+            
+            System.out.println("OK:"+sellerid);
+            
+            boolean success = false;
+            
+            
+            while(resultSet.next())
+            {
+            	ResultSetMetaData rsmd = resultSet.getMetaData();
+            	int columnsNumber = rsmd.getColumnCount();
+            	
+            	
+            	for(int i=1;i<=columnsNumber;i++)
+            	{
+            		String name = rsmd.getColumnName(i);
+            		jsonobject.put(name, resultSet.getObject(i).toString());
+            	}
+            	
+            	jsonarray.put(jsonobject);
+            	jsonobject = new JSONObject();
+            }
+            
+            
+            jsonarray.put(jsonobject);
+            
+            answer.put("Result", jsonarray);
+            
+            
+            
+        }
+        
+        catch (Exception e) 
+        {
+        	log.log(Level.INFO, "Error::"+e);
+            e.printStackTrace();
+        }
+        
+        
+        return answer.toString();
 
 	}
 	
