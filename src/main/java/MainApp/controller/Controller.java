@@ -293,7 +293,7 @@ public class Controller {
 	
 	@ResponseBody
 	@RequestMapping(value="/CreditHistory", method= RequestMethod.POST, produces="application/json")
-	public String CreditHistory(String CustomerId) {
+	public String CreditHistory(@RequestParam String CustomerId) {
 		
 		JSONObject jsonobject = new JSONObject(); 
 		JSONObject answer = new JSONObject(); 
@@ -349,7 +349,46 @@ public class Controller {
         
         return answer.toString();
 
-	}	
+	}
+	
+	@RequestMapping(value="/getCredit", method= RequestMethod.POST, produces="application/json")
+	public String getCredit(@RequestParam String id) throws SQLException
+	{
+		connection = getConnection();
+		JSONObject obj = new JSONObject(); 
+		try {
+            
+        	// Create and execute a SELECT SQL statement.
+            String selectSql = "SELECT creditScore FROM MyUSER where UserId=? ";
+
+            PreparedStatement statement = connection.prepareStatement(selectSql);  
+            statement.setString(1, id);
+            
+            ResultSet resultSet = statement.executeQuery();
+            
+            if(resultSet.next())
+            {
+            	obj.put("Credit", resultSet.getInt(1));
+            }
+            else
+            {
+            	obj.put("Credit", 0);
+            }
+
+               
+            
+        }
+        
+        catch (Exception e) 
+        {
+        	log.log(Level.INFO, "Error::"+e);
+            e.printStackTrace();
+            obj.put("Credit", 0);
+        }
+        
+        return obj.toString();
+	}
+
 
 
 	
