@@ -42,6 +42,7 @@ public class Controller {
 		 {
 			 try {
 				connection = DriverManager.getConnection(url);
+				connection.setAutoCommit(true);
 				log.log(Level.INFO, "======================================");
 				log.log(Level.INFO, "Connection Successfull");
 				log.log(Level.INFO, "======================================");
@@ -121,7 +122,9 @@ public class Controller {
         
         return obj.toString();
 
-	}	
+	}
+	
+	
 	
 	@ResponseBody
 	@RequestMapping(value="/seller", method= RequestMethod.POST, produces="application/json")
@@ -135,7 +138,7 @@ public class Controller {
             connection = getConnection();
         	
         	// Create and execute a SELECT SQL statement.
-            String selectSql = "SELECT * FROM seller where SellerID=?";
+            String selectSql = "SELECT * FROM seller where SellerID=? and Status='PENDING'";
 
             PreparedStatement statement = connection.prepareStatement(selectSql);  
             statement.setString(1, sellerid);
@@ -182,6 +185,173 @@ public class Controller {
         return answer.toString();
 
 	}
+	
+	@ResponseBody
+	@RequestMapping(value="/addCredits", method= RequestMethod.POST, produces="application/json")
+	public String addCredits(@RequestParam String id, String CustomerId, String creditScore) {
+		
+		JSONObject obj = new JSONObject(); 
+		String userid = null;
+        try {
+            connection = getConnection();
+        	
+            connection.setAutoCommit(false);
+            
+        	// Create and execute a SELECT SQL statement.
+            String selectSql = "UPDATE Seller set Status='APPROVED' where id=? ";
+
+            PreparedStatement statement = connection.prepareStatement(selectSql);  
+            statement.setString(1, id);
+            
+            int rowUpdated = statement.executeUpdate();
+            
+            // ----------------------------------
+            
+            selectSql = "Select creditScore from MyUSER where USERID=? ";
+            statement = connection.prepareStatement(selectSql);  
+            statement.setString(1, CustomerId);
+            
+            int credit = -1;
+            ResultSet rs = statement.executeQuery();
+            if(rs.next())
+            {
+            	credit = rs.getInt(1);
+            	System.out.println("credit:"+credit);
+            	int add = Integer.parseInt(creditScore);
+            	selectSql = "UPDATE MyUSER set creditScore=? where USERID=?";
+                statement = connection.prepareStatement(selectSql);  
+                statement.setInt(1, (credit + add));
+                statement.setString(2, CustomerId);
+                statement.executeUpdate();
+                
+                connection.commit();
+            }
+            else
+            {
+            	connection.rollback();
+            }
+            
+            connection.setAutoCommit(true);
+            
+            return "SUCCESS";
+            
+        }
+        
+        catch (Exception e) 
+        {
+        	log.log(Level.INFO, "Error::"+e);
+            e.printStackTrace();
+            if(connection!=null)
+            {
+            	try {
+            		connection.rollback();
+            		connection.setAutoCommit(true);
+            	}
+            	catch(Exception ee)
+            	{
+            		return "FaILURE:"+ee;
+            	}
+            	
+            }
+            return "FAILURE";
+        }
+        
+       
+
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="/rejectRequest", method= RequestMethod.POST, produces="application/json")
+	public String reject(@RequestParam String id) {
+		
+		JSONObject obj = new JSONObject(); 
+		String userid = null;
+        try {
+            connection = getConnection();
+        	
+        	// Create and execute a SELECT SQL statement.
+            String selectSql = "UPDATE Seller set Status='NOT APPROVED' where id=? ";
+
+            PreparedStatement statement = connection.prepareStatement(selectSql);  
+            statement.setString(1, id);
+            
+            int rowUpdated = statement.executeUpdate();
+            
+            return "SUCCESS";
+        }
+        
+        catch (Exception e) 
+        {
+        	log.log(Level.INFO, "Error::"+e);
+            e.printStackTrace();
+            return "FAILURE";
+        }
+        
+        
+
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="/CreditHistory", method= RequestMethod.POST, produces="application/json")
+	public String CreditHistory(String CustomerId) {
+		
+		JSONObject jsonobject = new JSONObject(); 
+		JSONObject answer = new JSONObject(); 
+        JSONArray jsonarray = new JSONArray();
+		String userid = null;
+        try {
+            connection = getConnection();
+        	
+        	// Create and execute a SELECT SQL statement.
+            String selectSql = "SELECT * FROM seller where CustomerId=? and Status='APPROVED'";
+
+            PreparedStatement statement = connection.prepareStatement(selectSql);  
+            statement.setString(1, CustomerId);
+            
+            ResultSet resultSet = statement.executeQuery();
+            
+            System.out.println("OK:"+CustomerId);
+            
+            boolean success = false;
+            
+            
+            while(resultSet.next())
+            {
+            	ResultSetMetaData rsmd = resultSet.getMetaData();
+            	int columnsNumber = rsmd.getColumnCount();
+            	
+            	
+            	for(int i=1;i<=columnsNumber;i++)
+            	{
+            		String name = rsmd.getColumnName(i);
+            		jsonobject.put(name, resultSet.getObject(i).toString());
+            	}
+            	
+            	jsonarray.put(jsonobject);
+            	jsonobject = new JSONObject();
+            }
+            
+            
+            jsonarray.put(jsonobject);
+            
+            answer.put("Result", jsonarray);
+            
+            
+            
+        }
+        
+        catch (Exception e) 
+        {
+        	log.log(Level.INFO, "Error::"+e);
+            e.printStackTrace();
+        }
+        
+        
+        return answer.toString();
+
+	}	
+
+
 	
 	@RequestMapping(value="/test")
 	public String data() throws SQLException
