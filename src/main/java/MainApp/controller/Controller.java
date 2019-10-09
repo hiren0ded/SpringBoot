@@ -29,7 +29,7 @@ public class Controller {
 	  
 	 public static Logger log = lgmngr.getLogger(Logger.GLOBAL_LOGGER_NAME); 
 	 
-	 private final static String url = "jdbc:sqlserver://hackathondb2019.database.windows.net:1433;database=Hackathon;user=wizards@hackathondb2019;password=Password1q2w;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;";
+	 private final static String url = "jdbc:sqlserver://wizardsdatabase.database.windows.net:1433;database=wizards;user=wizards@wizardsdatabase;password=Password1q2w;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;";
 	 
 	 Connection connection = null;
 	 
