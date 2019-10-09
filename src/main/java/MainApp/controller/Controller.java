@@ -400,7 +400,7 @@ public class Controller {
         try {
             
         	// Create and execute a SELECT SQL statement.
-            String selectSql = "SELECT * FROM Persons";
+            String selectSql = "SELECT * FROM MyUSER";
 
             	Statement statement = connection.createStatement();
             	ResultSet resultSet = statement.executeQuery(selectSql);
